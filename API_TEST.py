@@ -121,7 +121,7 @@ def user(email):
 	if request.method == 'DELETE':
 		cur = conn.cursor()
 		
-		delt = ("delete fro student where email = %s")
+		delt = ("delete from student where email = %s")
 		cur.execute(delt,(email,))
 		conn.commit()
 		
