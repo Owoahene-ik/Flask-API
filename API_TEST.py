@@ -78,28 +78,31 @@ def user(email):
 	if request.method=='GET':
 		cur = conn.cursor()
 
-		temp = ("SELECT * FROM STUDENT where email = %s", (email),)
-		cur.execute(temp,)
+		temp = ("SELECT * FROM STUDENT where email = %s")
+		cur.execute(temp,(email,))
 		
 		res = cur.fetchone()
 							
 		if res is not None:
-			return jsonify(res), 201
+			return jsonify(res), 200
 		else:		
-			return('No username found')
+			return('No username found'), 404
 			
 	if request.method== 'PUT':
+		print(email)
 		cur = conn.cursor()
-		thun = ("SELECT * FROM STUDENT where email = %s")
-		cur.execute(thun,(email))
+		thun = ("SELECT email FROM STUDENT where email = %s")
+		cur.execute(thun,(email,))
 		tes = cur.fetchone()
-		if tes == email:
-			up_first = request.form('fname')
-			up_age = request.form('aged')
-			up_email = request.form('country')
+		print(tes[0])
+		if tes[0] == email:
+			print(request)
+			up_first = request.form.get('fname')
+			up_age = request.form.get('aged')
+			up_email = request.form.get('countr')
 		
-			guess = ("update student set first_name = %s,age = %s, country = %s where email =%s ",(email))
-			cur.execute(guess, (up_first,up_age,up_email))
+			guess = ("update student set first_name = %s,age = %s, country = %s where email =%s ")
+			cur.execute(guess, (up_first,up_age,up_email,(email,)))
 			conn.commit()
 			
 			
@@ -119,7 +122,7 @@ def user(email):
 		cur = conn.cursor()
 		
 		delt = ("delete fro student where email = %s")
-		cur.execute(delt,(email))
+		cur.execute(delt,(email,))
 		conn.commit()
 		
 		lee = ("SELECT * FROM STUDENT")
