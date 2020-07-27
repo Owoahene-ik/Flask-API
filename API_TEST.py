@@ -1,7 +1,9 @@
-from flask import request, url_for, jsonify, logging 
+from flask import request, url_for, jsonify, logging , Response
 from flask_api import FlaskAPI, status, exceptions
 import psycopg2
+import psycopg2.extras
 from flask_restful import Resource, Api, reqparse
+import json
 
 
 
@@ -14,27 +16,34 @@ except:
 	#logging.exception("Failed to get database connection!")
 	print("Cannot connect to database")
 	
-#parser = reqparse.RequestParser()
+parser = reqparse.RequestParser()
 
 @app.route('/student', methods=['GET','POST'])
 def student():
 	if request.method == 'GET':
-		cur = conn.cursor()
-
-		stud = ("SELECT * FROM STUDENT")
-		cur.execute(stud)
+		cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 		
-		results = cur.fetchall();
+		fetch_all_as_dict = lambda cursor: [dict(row) for row in cursor]
+		
+		# declare lambda function
+
+		cur.execute("SELECT * FROM STUDENT")
+		
+		
+		results = fetch_all_as_dict(cur)
+		
+		#return jsonify(results)
 		
 		if len(results) > 0:
-			return jsonify(results)
+			return jsonify({"responseCode":  "00", "message": "Students fetched successfully", "data": results}), 200
 			
-			conn.commit()
-			#conn.close()
-			cur.close()
+			
 			
 		else:
-			return('No data found')
+			return jsonify({"responseCode":  "00", "message": "No data found", "data": None}), 404
+		
+		#conn.close()
+		cur.close()
 			
 	if request.method == 'POST':
 		cur = conn.cursor()
@@ -51,8 +60,7 @@ def student():
 		add_age = request.form.get('age')
 		add_country= request.form.get('country')
 		add_email = request.form.get('email')
-		
-		
+	    			
 		
 		
 		varg = "INSERT INTO STUDENT (first_name,last_name, age, country, email) VALUES (%s, %s, %s, %s,%s)"
@@ -60,33 +68,45 @@ def student():
 		cur.execute(varg, (add_first,add_second, add_age, add_country, add_email))
 		conn.commit()
 		
-		fin = ("SELECT * FROM STUDENT")
-		cur.execute(fin)
+		cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 		
-		ans = cur.fetchall();
+		fetch_all_as_dict = lambda cursor: [dict(row) for row in cursor]
 		
-		conn.commit()
-		#conn.close()
-		cur.close()
+		# declare lambda function
+
+		cur.execute("SELECT * FROM STUDENT")
 		
-		return jsonify(ans), 201
+		
+		results = fetch_all_as_dict(cur)
+		
+		#return jsonify(results)
+		
+		if len(results) > 0:
+			return jsonify({"responseCode":  "00", "message": "Students fetched successfully", "data": results}), 201
+			
+		cur.close()	
+			
+		
 		
 		
 		
 @app.route("/students/<email>", methods = ['GET','PUT','DELETE'])
 def user(email):
 	if request.method=='GET':
-		cur = conn.cursor()
+		cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+		
+		fetch_all_as_dict = lambda cursor: [dict(row) for row in cursor]
 
 		temp = ("SELECT * FROM STUDENT where email = %s")
 		cur.execute(temp,(email,))
 		
-		res = cur.fetchone()
-							
-		if res is not None:
-			return jsonify(res), 200
+		#res = cur.fetchone()
+											
+		if cur is not None:
+			return jsonify(fetch_all_as_dict(cur)), 200
 		else:		
 			return('No username found'), 404
+			
 			
 	if request.method== 'PUT':
 		print(email)
